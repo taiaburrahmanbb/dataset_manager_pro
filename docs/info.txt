@@ -1,0 +1,35 @@
+# 1. nohup (simplest — output goes to extract.log)
+cd ~/dataset_manager_pro
+nohup .venv/bin/python backend/batch_extract.py > extract.log 2>&1 &
+
+# Check progress anytime:
+tail -f extract.log
+
+# 2. screen (you can re-attach later)
+screen -S extract .venv/bin/python backend/batch_extract.py
+# Detach: Ctrl+A then D
+# Re-attach: screen -r extract
+
+# 3. tmux (same idea)
+tmux new -s extract ".venv/bin/python backend/batch_extract.py"
+# Detach: Ctrl+B then D
+# Re-attach: tmux attach -t extract
+
+
+# See all python processes (quickest way to find yours)
+ps aux | grep batch_extract
+
+# Or see all background jobs started from this shell
+jobs -l
+
+tail -f extract.log
+
+# Find the PID first
+ps aux | grep batch_extract
+
+# Then kill it
+kill <PID>
+
+
+ps -p <PID>
+

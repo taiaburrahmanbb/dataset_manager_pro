@@ -1,0 +1,476 @@
+================================================================================
+  WASABI BUCKET REORGANIZATION — 5 OPTIONS
+  Project: GAID (GenAI Image Detector)
+  Base path: bbvision/datasets/projects/GAID/
+  Date: April 13, 2026
+================================================================================
+
+
+────────────────────────────────────────────────────────────────────────────────
+  OPTION A — Simple & Flat
+────────────────────────────────────────────────────────────────────────────────
+
+  Pattern:  GAID/data/<real|fake>/<archive>
+
+  bbvision/datasets/projects/GAID/
+  ├── data/
+  │   ├── fake/
+  │   │   ├── genAI/                             (split zips)
+  │   │   ├── Shutterstock_Fake.tar.lz4
+  │   │   ├── Gen_samples_Gemini_100325.tar.lz4
+  │   │   └── ...                                (all fake archives)
+  │   │
+  │   └── real/
+  │       ├── human/                             (split zips)
+  │       ├── Shutterstock_Real.tar.lz4
+  │       ├── selected_real_samples.tar.gz
+  │       └── ...                                (all real archives)
+  │
+  ├── csv/
+  │   ├── GAID_Dataset_v9_full_Train.csv
+  │   ├── GAID_Dataset_v9_full_Val.csv
+  │   ├── GAID_Dataset_v10_full_Train.csv
+  │   ├── GAID_Dataset_v10_full_Val.csv
+  │   ├── train_fold_5.csv
+  │   └── prompts/
+  │       └── Image_generation_prompts_Gemini_100325.csv
+  │
+  └── docs/
+      ├── README.md
+      └── CHANGELOG.md
+
+  Pros:
+    + Simplest structure — only 3 top-level folders (data/, csv/, docs/)
+    + Flat listing per label makes bulk downloads trivial
+    + aws s3 cp .../data/fake/ local/fake/ --recursive grabs everything
+
+  Cons:
+    - No distinction between original and processed data in the bucket
+    - As archives grow into hundreds, the flat list can be hard to scan
+
+
+────────────────────────────────────────────────────────────────────────────────
+  OPTION B — Pipeline Stages (Raw → Processing → Processed)
+────────────────────────────────────────────────────────────────────────────────
+
+  Pattern:  GAID/<raw|processing|processed>/<real|fake>/<archive>
+
+  bbvision/datasets/projects/GAID/
+  ├── raw/                                    (original archives — immutable)
+  │   ├── fake/
+  │   │   ├── genAI/                             (split zips)
+  │   │   ├── Shutterstock_Fake.tar.lz4
+  │   │   └── ...
+  │   └── real/
+  │       ├── human/                             (split zips)
+  │       ├── Shutterstock_Real.tar.lz4
+  │       └── ...
+  │
+  ├── processing/                             (intermediate — resized / augmented)
+  │   ├── fake/
+  │   │   ├── genAI_scaled_224.tar.lz4
+  │   │   └── ...
+  │   └── real/
+  │       ├── human_scaled_224.tar.lz4
+  │       └── ...
+  │
+  ├── processed/                              (final — ready to train)
+  │   ├── fake/
+  │   │   └── (cleaned & validated archives)
+  │   └── real/
+  │       └── (cleaned & validated archives)
+  │
+  ├── csv/
+  │   ├── GAID_Dataset_v9_full_Train.csv
+  │   ├── GAID_Dataset_v10_full_Train.csv
+  │   ├── train_fold_5.csv
+  │   └── prompts/
+  │       └── ...
+  │
+  └── docs/
+      ├── README.md
+      └── CHANGELOG.md
+
+  Pros:
+    + Clear data lineage — you know where an archive sits in the pipeline
+    + raw/ is immutable — safe to re-derive everything from it
+    + processing/ gives a home for intermediate transforms (resizing, augmentation)
+    + Teams can set different lifecycle/retention policies per stage
+
+  Cons:
+    - More folders to manage — 3 data prefixes instead of 1
+    - Must decide which stage each archive belongs to
+
+
+────────────────────────────────────────────────────────────────────────────────
+  OPTION C — Version-First
+────────────────────────────────────────────────────────────────────────────────
+
+  Pattern:  GAID/<v9|v10>/<real|fake>/<archive>
+
+  bbvision/datasets/projects/GAID/
+  ├── v9/                                     (dataset version 9)
+  │   ├── fake/
+  │   │   ├── genAI/                             (split zips)
+  │   │   ├── Shutterstock_Fake.tar.lz4
+  │   │   └── ...
+  │   └── real/
+  │       ├── human/                             (split zips)
+  │       ├── Shutterstock_Real.tar.lz4
+  │       └── ...
+  │
+  ├── v10/                                    (dataset version 10 — adds new sources)
+  │   ├── fake/
+  │   │   ├── (all v9 fake archives)
+  │   │   ├── Gen_samples_Flux_050425.tar.lz4        (new in v10)
+  │   │   └── Gen_samples_Midjourney_120425.tar.lz4  (new in v10)
+  │   └── real/
+  │       ├── (all v9 real archives)
+  │       └── selected_Real_Samples_phase_3.tar.lz4  (new in v10)
+  │
+  ├── csv/
+  │   ├── v9/
+  │   │   ├── GAID_Dataset_v9_full_Train.csv
+  │   │   └── GAID_Dataset_v9_full_Val.csv
+  │   ├── v10/
+  │   │   ├── GAID_Dataset_v10_full_Train.csv
+  │   │   └── GAID_Dataset_v10_full_Val.csv
+  │   ├── folds/
+  │   │   └── train_fold_5.csv
+  │   └── prompts/
+  │       └── ...
+  │
+  └── docs/
+      ├── README.md
+      └── CHANGELOG.md
+
+  Pros:
+    + Each version is a complete, self-contained snapshot
+    + Easy to compare: diff file lists between v9/fake/ and v10/fake/
+    + Rolling back is trivial — point training at the previous version folder
+    + New team members immediately see which version to use
+
+  Cons:
+    - Data duplication: shared archives stored in every version
+    - Storage cost grows linearly with versions
+
+
+────────────────────────────────────────────────────────────────────────────────
+  OPTION D — Pipeline Stages + Versioned Output (B + C combined)
+────────────────────────────────────────────────────────────────────────────────
+
+  Pattern:  GAID/<raw|processing|processed>/<...>
+            - raw/ and processing/ are SHARED (one copy, no version duplication)
+            - processed/ is VERSIONED: processed/v9/, processed/v10/
+
+  bbvision/datasets/projects/GAID/
+  │
+  ├── raw/                                    (original archives — immutable, ONE copy)
+  │   ├── fake/
+  │   │   ├── genAI/                             (split zips)
+  │   │   ├── Shutterstock_Fake.tar.lz4
+  │   │   ├── Gen_samples_Gemini_100325.tar.lz4
+  │   │   └── ...
+  │   └── real/
+  │       ├── human/                             (split zips)
+  │       ├── Shutterstock_Real.tar.lz4
+  │       ├── selected_real_samples.tar.gz
+  │       └── ...
+  │
+  ├── processing/                             (intermediate — resized / augmented, SHARED)
+  │   ├── fake/
+  │   │   ├── genAI_scaled_224.tar.lz4
+  │   │   └── ...
+  │   └── real/
+  │       ├── human_scaled_224.tar.lz4
+  │       └── ...
+  │
+  ├── processed/                              (final — ready to train, VERSIONED)
+  │   ├── v9/
+  │   │   ├── fake/
+  │   │   │   └── (all v9 cleaned & validated fake archives)
+  │   │   └── real/
+  │   │       └── (all v9 cleaned & validated real archives)
+  │   └── v10/
+  │       ├── fake/
+  │       │   ├── (all v9 processed fake)
+  │       │   └── Gen_samples_Flux_050425.tar.lz4        (new in v10)
+  │       └── real/
+  │           ├── (all v9 processed real)
+  │           └── selected_Real_Samples_phase_3.tar.lz4  (new in v10)
+  │
+  ├── csv/
+  │   ├── GAID_Dataset_v9_full_Train.csv
+  │   ├── GAID_Dataset_v10_full_Train.csv
+  │   ├── train_fold_5.csv
+  │   └── prompts/
+  │       └── ...
+  │
+  └── docs/
+      ├── README.md
+      └── CHANGELOG.md
+
+  Pros:
+    + Pipeline stages at top level (like B) — clear data lineage
+    + raw/ and processing/ are SHARED — no data duplication for source archives
+    + Only processed/ is versioned — duplication only where it matters (final output)
+    + Version rollback: point training at processed/v9/ or processed/v10/
+    + "Get all raw fake data" is just .../raw/fake/ (no version needed)
+    + Adding new raw data: drop in raw/fake/ — it feeds into ALL future versions
+    + Clean separation: raw (immutable) → processing (transforms) → processed/vN (releases)
+
+  Cons:
+    - processed/ still has per-version duplication for shared archives
+    - Must manage which raw archives belong to which processed version via CSV manifests
+    - 4 levels deep for raw/processing, 5 levels for processed
+
+
+────────────────────────────────────────────────────────────────────────────────
+  OPTION E — Full Lifecycle (D + Models + Benchmarks + Monitoring)
+────────────────────────────────────────────────────────────────────────────────
+
+  Pattern:  Same as D, plus models/, benchmarks/, monitoring/ at project root.
+            - raw/, processing/, processed/ — same as Option D
+            - models/      — trained model checkpoints (.pt, .pth, .onnx, configs)
+            - benchmarks/  — curated test sets + ground truth for model evaluation
+            - monitoring/  — production inference logs, drift data, misclassified samples
+
+  bbvision/datasets/projects/GAID/
+  │
+  ├── raw/                                    (original archives — immutable, ONE shared copy)
+  │   ├── fake/
+  │   │   ├── genAI/                             (split zips)
+  │   │   ├── Shutterstock_Fake.tar.lz4
+  │   │   ├── Gen_samples_DALLE_2_300325.tar.lz4
+  │   │   └── ...
+  │   └── real/
+  │       ├── human/                             (split zips)
+  │       ├── Shutterstock_Real.tar.lz4
+  │       ├── selected_real_samples.tar.gz
+  │       └── ...
+  │
+  ├── processing/                             (intermediate — resized / augmented, SHARED)
+  │   ├── fake/
+  │   │   ├── genAI_scaled_224.tar.lz4
+  │   │   └── ...
+  │   └── real/
+  │       ├── human_scaled_224.tar.lz4
+  │       └── ...
+  │
+  ├── processed/                              (final — ready to train, VERSIONED)
+  │   ├── v9/
+  │   │   ├── fake/
+  │   │   │   └── (v9 cleaned & validated fake archives)
+  │   │   └── real/
+  │   │       └── (v9 cleaned & validated real archives)
+  │   └── v10/
+  │       ├── fake/
+  │       │   └── (v10 cleaned & validated fake archives)
+  │       └── real/
+  │           └── (v10 cleaned & validated real archives)
+  │
+  ├── models/                                ← NEW: trained model checkpoints & configs
+  │   ├── v9/                                   (models trained on processed/v9/ data)
+  │   │   ├── gaid_v9_resnet50_epoch120.pt         best checkpoint
+  │   │   ├── gaid_v9_resnet50_last.pt             last epoch checkpoint
+  │   │   ├── gaid_v9_efficientnet_epoch85.pth     alternative architecture
+  │   │   ├── gaid_v9_resnet50.onnx               exported for inference
+  │   │   ├── train_config.yaml                    hyperparams, augmentations, schedule
+  │   │   └── training_log.csv                     epoch, loss, acc, val_acc, lr
+  │   │
+  │   ├── v10/                                  (models trained on processed/v10/ data)
+  │   │   ├── gaid_v10_resnet50_epoch150.pt
+  │   │   ├── gaid_v10_resnet50_last.pt
+  │   │   ├── gaid_v10_resnet50.onnx
+  │   │   ├── train_config.yaml
+  │   │   └── training_log.csv
+  │   │
+  │   └── experimental/                         (one-off experiments, ablations)
+  │       ├── v10_vit_large_epoch80.pt
+  │       └── train_config.yaml
+  │
+  ├── benchmarks/                             ← NEW: curated test sets for model evaluation
+  │   ├── testset_v1/                         (a fixed benchmark — never changes)
+  │   │   ├── images/
+  │   │   │   ├── fake/
+  │   │   │   │   ├── dalle3_bench_001.jpg
+  │   │   │   │   └── ...
+  │   │   │   └── real/
+  │   │   │       ├── photo_bench_001.jpg
+  │   │   │       └── ...
+  │   │   └── ground_truth.csv
+  │   │
+  │   ├── testset_v2/                         (newer benchmark — emerging AI models)
+  │   │   ├── images/
+  │   │   │   ├── fake/
+  │   │   │   └── real/
+  │   │   └── ground_truth.csv
+  │   │
+  │   ├── adversarial/                        (hard cases: upscaled, post-processed)
+  │   │   ├── images/
+  │   │   │   ├── fake/
+  │   │   │   └── real/
+  │   │   └── ground_truth.csv
+  │   │
+  │   └── results/                            (model evaluation outputs)
+  │       ├── v9_testset_v1_results.csv
+  │       ├── v10_testset_v1_results.csv
+  │       ├── v10_adversarial_results.csv
+  │       └── comparison_v9_vs_v10.csv
+  │
+  ├── monitoring/                             ← NEW: production model monitoring & drift
+  │   ├── predictions/                        (inference logs from production)
+  │   │   ├── 2026-04/
+  │   │   │   ├── predictions_20260401.csv
+  │   │   │   └── ...
+  │   │   └── 2026-05/
+  │   │       └── ...
+  │   │
+  │   ├── flagged/                            (misclassified / low-confidence samples)
+  │   │   ├── false_positives/
+  │   │   │   ├── images/
+  │   │   │   │   ├── fp_20260401_001.jpg
+  │   │   │   │   └── ...
+  │   │   │   └── false_positives_log.csv
+  │   │   └── false_negatives/
+  │   │       ├── images/
+  │   │       │   ├── fn_20260401_001.jpg
+  │   │       │   └── ...
+  │   │       └── false_negatives_log.csv
+  │   │
+  │   ├── drift/                              (data drift detection reports)
+  │   │   ├── drift_report_2026-04.csv
+  │   │   └── feature_distributions/
+  │   │       └── distribution_2026-04.parquet
+  │   │
+  │   └── retraining_candidates/              (queued for next training round)
+  │       ├── images/
+  │       │   ├── candidate_001.jpg
+  │       │   └── ...
+  │       └── retraining_queue.csv
+  │
+  ├── csv/
+  │   ├── GAID_Dataset_v9_full_Train.csv
+  │   ├── GAID_Dataset_v9_full_Val.csv
+  │   ├── GAID_Dataset_v10_full_Train.csv
+  │   ├── GAID_Dataset_v10_full_Val.csv
+  │   ├── train_fold_5.csv
+  │   └── prompts/
+  │       └── Image_generation_prompts_Gemini_100325.csv
+  │
+  └── docs/
+      ├── README.md
+      └── CHANGELOG.md
+
+
+  ── CSV SCHEMAS (models/, benchmarks/ & monitoring/) ──────────────────────
+
+  models/v9/training_log.csv:
+    epoch,train_loss,train_acc,val_loss,val_acc,lr,timestamp
+    1,0.693,0.512,0.681,0.534,0.001,2026-03-15T10:00:00Z
+    120,0.041,0.987,0.089,0.961,0.0001,2026-03-17T06:45:00Z
+
+  benchmarks/testset_v1/ground_truth.csv:
+    filename,label,source_model,category,difficulty,notes
+    dalle3_bench_001.jpg,0,dalle_3,portrait,easy,clean studio output
+    photo_bench_001.jpg,1,,landscape,easy,DSLR outdoor shot
+
+  benchmarks/results/v10_testset_v1_results.csv:
+    filename,true_label,pred_label,confidence,model_version,eval_date
+    dalle3_bench_001.jpg,0,0,0.97,v10,2026-04-10
+    photo_bench_001.jpg,1,1,0.94,v10,2026-04-10
+
+  benchmarks/results/comparison_v9_vs_v10.csv:
+    metric,testset,v9_score,v10_score,delta
+    accuracy,testset_v1,0.943,0.961,+0.018
+    f1_fake,testset_v1,0.941,0.961,+0.020
+    accuracy,adversarial,0.871,0.912,+0.041
+
+  monitoring/predictions/2026-04/predictions_20260401.csv:
+    image_id,pred_label,confidence,model_version,timestamp,source
+    img_abc123,0,0.89,v10,2026-04-01T08:12:33Z,api_upload
+
+  monitoring/flagged/false_positives/false_positives_log.csv:
+    filename,true_label,pred_label,confidence,model_version,flagged_date,reviewed
+    fp_20260401_001.jpg,1,0,0.72,v10,2026-04-01,false
+
+  monitoring/drift/drift_report_2026-04.csv:
+    metric,baseline_v10_train,current_month,drift_pct,alert
+    mean_confidence,0.934,0.891,-4.6%,warning
+    fake_ratio,0.48,0.62,+29.2%,critical
+
+  monitoring/retraining_candidates/retraining_queue.csv:
+    filename,source,reason,flagged_date,priority,assigned_label
+    candidate_001.jpg,api_upload,false_negative,2026-04-02,high,
+
+
+  ── SUPPORTED MODEL FILE TYPES ────────────────────────────────────────────
+
+  Extension    Framework        Description
+  .pt          PyTorch          Full model or state_dict checkpoint
+  .pth         PyTorch          Same as .pt (convention varies)
+  .onnx        ONNX Runtime     Exported for cross-framework inference
+  .safetensors HuggingFace      Safe serialization (no pickle risk)
+  .tflite      TensorFlow Lite  Mobile / edge deployment
+  .yaml/.json  —                Training config, hyperparams, augmentation settings
+
+
+  Pros:
+    + Everything from Option D (pipeline lineage + versioned releases)
+    + models/ backs up trained checkpoints alongside the data they were trained on
+    + Model versions match data versions (models/v9/ ↔ processed/v9/) — full traceability
+    + Configs + training logs stored with checkpoints — fully reproducible training
+    + experimental/ folder for ablations without cluttering production model versions
+    + benchmarks/ gives fixed, immutable test sets for reproducible model evaluation
+    + benchmarks/results/ tracks model scores across versions — easy to compare v9 vs v10
+    + monitoring/ closes the loop: production → flagged errors → retraining → raw/
+    + Misclassified images (with actual .jpg files) stored alongside their metadata CSVs
+    + Drift reports catch when production data shifts away from training distribution
+    + Full MLOps lifecycle: data → train → checkpoint → evaluate → deploy → monitor → retrain
+
+  Cons:
+    - Most complex structure — 8 top-level folders under GAID/
+    - Model checkpoints can be large (100 MB–2 GB each) — consider retention policies
+    - monitoring/ grows over time — needs lifecycle rules (e.g. delete logs after 6 months)
+    - Overkill if you're not running models in production yet
+
+
+================================================================================
+  COMPARISON TABLE
+================================================================================
+
+  Aspect              Option A      Option B        Option C        Option D          Option E
+  ─────────────────── ───────────── ─────────────── ─────────────── ───────────────── ──────────────────
+  Top-level folders   data/         raw/ proc'ing/  v9/ v10/ ...   raw/ proc'ing/    raw/ proc'ing/
+                      csv/ docs/    processed/                      processed/        processed/ models/
+                                    csv/ docs/      csv/ docs/      csv/ docs/        benchmarks/
+                                                                                      monitoring/
+                                                                                      csv/ docs/
+
+  Max depth           3 levels      4 levels        3 levels       4-5 levels        5-6 levels
+
+  "Get all raw fake"  data/fake/    raw/fake/       N/A            raw/fake/         raw/fake/
+
+  "Get v9 output"     N/A           processed/      v9/fake/       processed/        processed/
+                                    fake/                           v9/fake/          v9/fake/
+
+  Data duplication    None          None            All per ver    Minimal           Minimal
+                                                                    (processed only)  (processed only)
+
+  Pipeline stages     No            Yes (3)         No             Yes (3)           Yes (3)
+  Versioning          No            No              Yes (all)      Yes (processed)   Yes (processed
+                                                                                      + models)
+  Model backups       No            No              No             No                Yes (.pt .pth .onnx
+                                                                                      + configs + logs)
+  Benchmarks          No            No              No             No                Yes (testsets +
+                                                                                      results)
+  Model monitoring    No            No              No             No                Yes (predictions,
+                                                                                      drift, flagged,
+                                                                                      retrain queue)
+
+  Best for            Quick setup   Data lineage    Reproducible   Pipeline +        Full MLOps:
+                                                    experiments    versioned         train → eval →
+                                                                    releases          deploy → monitor
+                                                                                      → retrain
+
+================================================================================
