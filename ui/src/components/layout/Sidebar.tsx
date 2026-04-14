@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FolderOpen, Files, Cpu, GitBranch,
   Download, Settings, ChevronLeft, Database, Wifi, WifiOff,
-  Activity,
+  Activity, Cloud, UploadCloud, Search, BookOpen, ArrowRightLeft,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAppStore } from '../../store/appStore';
@@ -10,6 +10,11 @@ import { useAppStore } from '../../store/appStore';
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/projects', icon: FolderOpen, label: 'Projects' },
+  { to: '/upload', icon: UploadCloud, label: 'Upload Assets' },
+  { to: '/wasabi-status', icon: Cloud, label: 'Wasabi Status' },
+  { to: '/wasabi-browser', icon: Search, label: 'Wasabi Browser' },
+  { to: '/file-sync', icon: ArrowRightLeft, label: 'File Sync' },
+  { to: '/project-summary', icon: BookOpen, label: 'Project Summary' },
   { to: '/files', icon: Files, label: 'File Browser' },
   { to: '/processing', icon: Cpu, label: 'Processing' },
   { to: '/versioning', icon: GitBranch, label: 'Versioning' },
@@ -19,9 +24,8 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const { sidebarCollapsed, toggleSidebar, wasabiConnected, jobs } = useAppStore();
+  const { sidebarCollapsed, toggleSidebar, wasabiConnected } = useAppStore();
   const location = useLocation();
-  const activeJobs = jobs.filter((j) => j.status === 'running').length;
 
   return (
     <aside
@@ -62,11 +66,6 @@ export function Sidebar() {
             >
               <div className="relative flex-shrink-0">
                 <Icon size={18} />
-                {label === 'Processing' && activeJobs > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-500 rounded-full text-[8px] flex items-center justify-center text-white font-bold">
-                    {activeJobs}
-                  </span>
-                )}
               </div>
               {!sidebarCollapsed && <span>{label}</span>}
             </NavLink>

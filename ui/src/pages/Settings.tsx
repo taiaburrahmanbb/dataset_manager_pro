@@ -2,12 +2,13 @@ import { useState } from 'react';
 import {
   Cloud, Database, Server, Shield, Bell,
   Eye, EyeOff, CheckCircle, RefreshCw, Wifi, WifiOff,
-  ChevronRight, Key,
+  ChevronRight, Key, XCircle,
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { Card, CardBody, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { useAppStore } from '../store/appStore';
+import { testWasabiConnection } from '../lib/api';
 
 const SECTIONS = [
   { id: 'wasabi', icon: Cloud, label: 'Wasabi Storage' },
@@ -22,12 +23,13 @@ export default function Settings() {
   const [activeSection, setActiveSection] = useState('wasabi');
   const [showSecret, setShowSecret] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
   const [wasabiForm, setWasabiForm] = useState({
     endpoint: 'https://s3.wasabisys.com',
     region: 'us-east-1',
-    accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-    secretAccessKey: '••••••••••••••••••••••••••••••••••••••••',
-    bucket: 'ml-datasets-prod',
+    accessKeyId: '',
+    secretAccessKey: '',
+    bucket: '',
     watchInterval: '30',
   });
 
@@ -53,9 +55,17 @@ export default function Settings() {
 
   const testWasabi = async () => {
     setTesting(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setWasabiConnected(true);
-    setTesting(false);
+    setTestError(null);
+    try {
+      await testWasabiConnection();
+      setWasabiConnected(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Connection failed';
+      setTestError(msg);
+      setWasabiConnected(false);
+    } finally {
+      setTesting(false);
+    }
   };
 
   return (
@@ -115,10 +125,16 @@ export default function Settings() {
                       <div>
                         <label className={labelCls}>Region</label>
                         <select className={inputCls} value={wasabiForm.region} onChange={(e) => setWasabiForm({ ...wasabiForm, region: e.target.value })}>
-                          <option value="us-east-1">us-east-1 (US East)</option>
+                          <option value="us-east-1">us-east-1 (US East - N. Virginia)</option>
+                          <option value="us-east-2">us-east-2 (US East - N. Virginia 2)</option>
                           <option value="us-west-1">us-west-1 (US West)</option>
+                          <option value="us-central-1">us-central-1 (US Central)</option>
                           <option value="eu-central-1">eu-central-1 (EU Central)</option>
-                          <option value="ap-southeast-1">ap-southeast-1 (Asia Pacific)</option>
+                          <option value="eu-central-2">eu-central-2 (EU Central 2)</option>
+                          <option value="eu-west-1">eu-west-1 (EU West)</option>
+                          <option value="eu-west-2">eu-west-2 (EU West 2)</option>
+                          <option value="ap-southeast-1">ap-southeast-1 (Asia Pacific SE)</option>
+                          <option value="ap-northeast-1">ap-northeast-1 (Asia Pacific NE)</option>
                         </select>
                       </div>
                     </div>
@@ -158,6 +174,11 @@ export default function Settings() {
                       {wasabiConnected && (
                         <div className="flex items-center gap-1.5 text-xs text-emerald-400">
                           <CheckCircle size={13} /> Connection verified
+                        </div>
+                      )}
+                      {testError && (
+                        <div className="flex items-center gap-1.5 text-xs text-red-400">
+                          <XCircle size={13} /> {testError}
                         </div>
                       )}
                     </div>
