@@ -8,7 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from collections import defaultdict
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from services.wasabi import wasabi_service
 from core.config import settings
@@ -704,6 +705,210 @@ async def sync_upload(project_name: str, files: list[str] | None = None, overwri
         )
 
     return {"uploaded": len(uploaded), "failed": len(errors), "results": uploaded, "errors": errors}
+
+
+_STREAM_HEADERS = {
+    "X-Accel-Buffering": "no",
+    "Cache-Control": "no-cache, no-transform",
+}
+
+
+@router.post("/sync/{project_name}/upload-stream")
+async def sync_upload_stream(project_name: str, files: list[str] | None = None, overwrite: bool = False):
+    """Upload local files to Wasabi with streaming progress via newline-delimited JSON.
+
+    Emits events: start, file_start, bytes (per-chunk for large files), progress, complete.
+    """
+    project_dir = PROJECTS_ROOT / project_name
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    report = _read_project_report(project_dir)
+    wasabi_prefix = report.get("wasabi_prefix", f"datasets/projects/{project_name}/")
+    if not wasabi_prefix.endswith("/"):
+        wasabi_prefix += "/"
+
+    if files is None:
+        comparison = await compare_sync(project_name)
+        target_files = [f["relative_path"] for f in comparison["local_only"]]
+        if overwrite:
+            target_files += [f["relative_path"] for f in comparison["both"]]
+    else:
+        target_files = files
+
+    import queue, threading
+
+    q: queue.Queue[str | None] = queue.Queue()
+
+    def _worker():
+        total = len(target_files)
+        q.put(json.dumps({"event": "start", "total": total}) + "\n")
+
+        uploaded = []
+        errors = []
+        for idx, rel in enumerate(target_files):
+            local_path = project_dir / rel
+            if not local_path.exists() or not local_path.is_file():
+                errors.append({"file": rel, "error": "File not found locally"})
+                q.put(json.dumps({
+                    "event": "progress", "index": idx + 1, "total": total,
+                    "file": rel, "status": "error", "error": "File not found locally",
+                }) + "\n")
+                continue
+
+            file_size = local_path.stat().st_size
+            q.put(json.dumps({
+                "event": "file_start", "index": idx + 1, "total": total,
+                "file": rel, "file_size": file_size,
+            }) + "\n")
+
+            try:
+                key = wasabi_prefix + rel
+                ct = mimetypes.guess_type(str(local_path))[0] or "application/octet-stream"
+
+                def _on_bytes(uploaded_bytes, _rel=rel, _fs=file_size, _idx=idx, _total=total):
+                    q.put(json.dumps({
+                        "event": "bytes", "file": _rel,
+                        "bytes_sent": uploaded_bytes, "file_size": _fs,
+                        "index": _idx + 1, "total": _total,
+                    }) + "\n")
+
+                with open(local_path, "rb") as fh:
+                    result = wasabi_service.upload_file(
+                        file_obj=fh, key=key, content_type=ct,
+                        progress_callback=_on_bytes,
+                    )
+                uploaded.append({"file": rel, "key": result["key"], "size": result["size"]})
+                q.put(json.dumps({
+                    "event": "progress", "index": idx + 1, "total": total,
+                    "file": rel, "status": "success", "size": file_size,
+                }) + "\n")
+            except Exception as e:
+                errors.append({"file": rel, "error": str(e)})
+                q.put(json.dumps({
+                    "event": "progress", "index": idx + 1, "total": total,
+                    "file": rel, "status": "error", "error": str(e),
+                }) + "\n")
+
+        if uploaded:
+            _append_changelog_and_sync(
+                project_dir, project_name, wasabi_prefix,
+                direction="local → wasabi",
+                files_list=[u["file"] for u in uploaded],
+                failed_count=len(errors),
+                overwrite=overwrite,
+            )
+
+        q.put(json.dumps({
+            "event": "complete",
+            "uploaded": len(uploaded), "failed": len(errors),
+            "results": uploaded, "errors": errors,
+        }) + "\n")
+        q.put(None)
+
+    def _generate():
+        thread = threading.Thread(target=_worker, daemon=True)
+        thread.start()
+        while True:
+            msg = q.get()
+            if msg is None:
+                break
+            yield msg
+
+    return StreamingResponse(
+        _generate(),
+        media_type="application/x-ndjson",
+        headers=_STREAM_HEADERS,
+    )
+
+
+@router.post("/sync/{project_name}/download-stream")
+async def sync_download_stream(project_name: str, files: list[str] | None = None, overwrite: bool = False):
+    """Download files from Wasabi with streaming progress via newline-delimited JSON."""
+    project_dir = PROJECTS_ROOT / project_name
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    report = _read_project_report(project_dir)
+    wasabi_prefix = report.get("wasabi_prefix", f"datasets/projects/{project_name}/")
+    if not wasabi_prefix.endswith("/"):
+        wasabi_prefix += "/"
+
+    if files is None:
+        comparison = await compare_sync(project_name)
+        target_files = [f["relative_path"] for f in comparison["wasabi_only"]]
+        if overwrite:
+            target_files += [f["relative_path"] for f in comparison["both"]]
+    else:
+        target_files = files
+
+    import queue, threading
+
+    q: queue.Queue[str | None] = queue.Queue()
+
+    def _worker():
+        total = len(target_files)
+        q.put(json.dumps({"event": "start", "total": total}) + "\n")
+
+        downloaded = []
+        errors = []
+        for idx, rel in enumerate(target_files):
+            q.put(json.dumps({
+                "event": "file_start", "index": idx + 1, "total": total, "file": rel,
+            }) + "\n")
+            try:
+                key = wasabi_prefix + rel
+                local_path = str(project_dir / rel)
+                success = wasabi_service.download_file(key, local_path)
+                if success:
+                    downloaded.append({"file": rel, "key": key})
+                    q.put(json.dumps({
+                        "event": "progress", "index": idx + 1, "total": total,
+                        "file": rel, "status": "success",
+                    }) + "\n")
+                else:
+                    errors.append({"file": rel, "error": "Download failed"})
+                    q.put(json.dumps({
+                        "event": "progress", "index": idx + 1, "total": total,
+                        "file": rel, "status": "error", "error": "Download failed",
+                    }) + "\n")
+            except Exception as e:
+                errors.append({"file": rel, "error": str(e)})
+                q.put(json.dumps({
+                    "event": "progress", "index": idx + 1, "total": total,
+                    "file": rel, "status": "error", "error": str(e),
+                }) + "\n")
+
+        if downloaded:
+            _append_changelog_and_sync(
+                project_dir, project_name, wasabi_prefix,
+                direction="wasabi → local",
+                files_list=[d["file"] for d in downloaded],
+                failed_count=len(errors),
+                overwrite=overwrite,
+            )
+
+        q.put(json.dumps({
+            "event": "complete",
+            "downloaded": len(downloaded), "failed": len(errors),
+            "results": downloaded, "errors": errors,
+        }) + "\n")
+        q.put(None)
+
+    def _generate():
+        thread = threading.Thread(target=_worker, daemon=True)
+        thread.start()
+        while True:
+            msg = q.get()
+            if msg is None:
+                break
+            yield msg
+
+    return StreamingResponse(
+        _generate(),
+        media_type="application/x-ndjson",
+        headers=_STREAM_HEADERS,
+    )
 
 
 @router.post("/sync/{project_name}/download")

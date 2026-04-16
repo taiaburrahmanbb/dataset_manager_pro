@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/api/v1',
-  timeout: 120000,
+  timeout: 600000,
 });
 
 // ---------------------------------------------------------------------------
@@ -223,6 +223,103 @@ export async function syncDownload(projectName: string, files?: string[], overwr
     params: { overwrite },
   });
   return data;
+}
+
+// ---------------------------------------------------------------------------
+//  Streaming File Sync (NDJSON progress)
+// ---------------------------------------------------------------------------
+
+export interface SyncProgressEvent {
+  event: 'start' | 'file_start' | 'bytes' | 'progress' | 'complete';
+  total?: number;
+  index?: number;
+  file?: string;
+  file_size?: number;
+  bytes_sent?: number;
+  status?: 'success' | 'error';
+  error?: string;
+  size?: number;
+  uploaded?: number;
+  downloaded?: number;
+  failed?: number;
+  results?: { file: string; key: string; size?: number }[];
+  errors?: { file: string; error: string }[];
+}
+
+async function streamSync(
+  url: string,
+  body: string[] | null,
+  overwrite: boolean,
+  onEvent: (evt: SyncProgressEvent) => void,
+  signal?: AbortSignal,
+) {
+  const params = new URLSearchParams();
+  if (overwrite) params.set('overwrite', 'true');
+  const fullUrl = `/api/v1${url}?${params.toString()}`;
+
+  const resp = await fetch(fullUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(text || `HTTP ${resp.status}`);
+  }
+
+  const reader = resp.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (line.trim()) {
+        onEvent(JSON.parse(line) as SyncProgressEvent);
+      }
+    }
+  }
+  if (buffer.trim()) {
+    onEvent(JSON.parse(buffer) as SyncProgressEvent);
+  }
+}
+
+export function syncUploadStream(
+  projectName: string,
+  files: string[] | undefined,
+  overwrite: boolean,
+  onEvent: (evt: SyncProgressEvent) => void,
+  signal?: AbortSignal,
+) {
+  return streamSync(
+    `/storage/sync/${projectName}/upload-stream`,
+    files ?? null,
+    overwrite,
+    onEvent,
+    signal,
+  );
+}
+
+export function syncDownloadStream(
+  projectName: string,
+  files: string[] | undefined,
+  overwrite: boolean,
+  onEvent: (evt: SyncProgressEvent) => void,
+  signal?: AbortSignal,
+) {
+  return streamSync(
+    `/storage/sync/${projectName}/download-stream`,
+    files ?? null,
+    overwrite,
+    onEvent,
+    signal,
+  );
 }
 
 // ---------------------------------------------------------------------------
