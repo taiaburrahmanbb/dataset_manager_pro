@@ -2,6 +2,7 @@
 Storage router — Wasabi status, bucket browsing, category uploads, local project
 management (create/scaffold), file sync, and documentation reader.
 """
+import asyncio
 import json
 import mimetypes
 from datetime import datetime
@@ -34,6 +35,9 @@ CATEGORY_MAP = {
 
 OPTION_E_DIRS = [
     "01.raw",
+    "01.raw/fake",
+    "01.raw/real",
+    "01.raw/testset",
     "02.processing",
     "03.processed",
     "04.models",
@@ -41,6 +45,11 @@ OPTION_E_DIRS = [
     "06.monitoring",
     "07.csv",
     "08.docs",
+]
+
+OPTION_E_TOP_DIRS = [
+    "01.raw", "02.processing", "03.processed", "04.models",
+    "05.benchmarks", "06.monitoring", "07.csv", "08.docs",
 ]
 
 
@@ -229,26 +238,40 @@ async def get_upload_categories():
 async def upload_to_wasabi(
     file: UploadFile = File(...),
     project: str = Form("GAID"),
-    category: str = Form("raw_fake"),
+    category: str = Form(""),
     subfolder: str = Form(""),
+    dest_path: str = Form(""),
 ):
-    if category not in CATEGORY_MAP:
-        raise HTTPException(status_code=400, detail=f"Invalid category. Choose from: {list(CATEGORY_MAP.keys())}")
-
-    cat_path = CATEGORY_MAP[category]
-    parts = ["datasets", "projects", project, cat_path]
-    if subfolder:
-        parts.append(subfolder.strip("/"))
-    parts.append(file.filename or "unknown")
-    key = "/".join(parts)
+    if dest_path:
+        dp = dest_path.strip("/")
+        key = f"datasets/projects/{project}/{dp}/{file.filename or 'unknown'}"
+    elif category:
+        if category not in CATEGORY_MAP:
+            raise HTTPException(status_code=400, detail=f"Invalid category. Choose from: {list(CATEGORY_MAP.keys())}")
+        cat_path = CATEGORY_MAP[category]
+        parts = ["datasets", "projects", project, cat_path]
+        if subfolder:
+            parts.append(subfolder.strip("/"))
+        parts.append(file.filename or "unknown")
+        key = "/".join(parts)
+    else:
+        raise HTTPException(status_code=400, detail="Either 'dest_path' or 'category' must be provided.")
 
     content_type = file.content_type or mimetypes.guess_type(file.filename or "")[0] or "application/octet-stream"
-    result = wasabi_service.upload_file(file_obj=file.file, key=key, content_type=content_type)
+    file_data = await file.read()
+
+    import io
+    result = await asyncio.to_thread(
+        wasabi_service.upload_file,
+        file_obj=io.BytesIO(file_data),
+        key=key,
+        content_type=content_type,
+    )
 
     project_dir = PROJECTS_ROOT / project
     if project_dir.exists():
-        rel_path = cat_path + ("/" + subfolder.strip("/") if subfolder else "") + "/" + (file.filename or "unknown")
         wasabi_prefix = f"datasets/projects/{project}/"
+        rel_path = key[len(wasabi_prefix):]
         _append_changelog_and_sync(
             project_dir, project, wasabi_prefix,
             direction="upload → wasabi",
@@ -263,7 +286,7 @@ async def upload_to_wasabi(
         "size": result["size"],
         "checksum": result["checksum"],
         "bucket": result["bucket"],
-        "category": category,
+        "category": category or dest_path,
         "project": project,
     }
 
@@ -282,6 +305,7 @@ async def upload_batch_to_wasabi(
     errors = []
     cat_path = CATEGORY_MAP[category]
 
+    import io
     for f in files:
         try:
             parts = ["datasets", "projects", project, cat_path]
@@ -290,7 +314,13 @@ async def upload_batch_to_wasabi(
             parts.append(f.filename or "unknown")
             key = "/".join(parts)
             content_type = f.content_type or mimetypes.guess_type(f.filename or "")[0] or "application/octet-stream"
-            result = wasabi_service.upload_file(file_obj=f.file, key=key, content_type=content_type)
+            file_data = await f.read()
+            result = await asyncio.to_thread(
+                wasabi_service.upload_file,
+                file_obj=io.BytesIO(file_data),
+                key=key,
+                content_type=content_type,
+            )
             results.append(result)
         except Exception as e:
             errors.append({"file": f.filename, "error": str(e)})
@@ -388,7 +418,15 @@ async def create_local_project(req: ProjectCreateRequest):
         "updated_at": now,
         "layout": "option_e",
         "structure": {
-            "01.raw": {"purpose": "Immutable original archives", "status": "empty"},
+            "01.raw": {
+                "purpose": "Immutable original archives",
+                "status": "empty",
+                "subfolders": {
+                    "fake": "AI-generated / synthetic images",
+                    "real": "Authentic / original images",
+                    "testset": "Held-out evaluation set",
+                },
+            },
             "02.processing": {"purpose": "Intermediate transforms (resized, augmented)", "status": "empty"},
             "03.processed": {"purpose": "Cleaned & validated training-ready data", "status": "empty"},
             "04.models": {"purpose": "Trained model checkpoints & configs", "status": "empty"},
@@ -398,7 +436,8 @@ async def create_local_project(req: ProjectCreateRequest):
             "08.docs": {"purpose": "Documentation (README, CHANGELOG)", "status": "populated"},
         },
         "summary": {
-            "total_stages": 8,
+            "total_stages": len(OPTION_E_TOP_DIRS),
+            "total_directories": len(OPTION_E_DIRS),
         },
     }
 
@@ -418,6 +457,9 @@ async def create_local_project(req: ProjectCreateRequest):
 ```
 {req.name}/
 ├── 01.raw/           Original archives (immutable)
+│   ├── fake/         AI-generated / synthetic images
+│   ├── real/         Authentic / original images
+│   └── testset/      Held-out evaluation set
 ├── 02.processing/    Intermediate transforms
 ├── 03.processed/     Final training-ready data
 ├── 04.models/        Trained model checkpoints & configs
@@ -575,6 +617,39 @@ async def create_project_subdirectory(project_name: str, path: str):
 #  File Sync (Local <-> Wasabi)
 # ---------------------------------------------------------------------------
 
+@router.post("/sync/{project_name}/folders")
+async def sync_folder_structure(project_name: str):
+    """Create folder markers on Wasabi for all standard directories in a project."""
+    project_dir = PROJECTS_ROOT / project_name
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    report = _read_project_report(project_dir)
+    wasabi_prefix = report.get("wasabi_prefix", f"datasets/projects/{project_name}/")
+    if not wasabi_prefix.endswith("/"):
+        wasabi_prefix += "/"
+
+    created = _sync_folder_structure(project_dir, wasabi_prefix)
+    return {"project": project_name, "folders_synced": created}
+
+
+def _sync_folder_structure(project_dir: Path, wasabi_prefix: str) -> list[str]:
+    """Create folder markers on Wasabi for all local directories that exist in the project."""
+    folder_prefixes = []
+    top_dirs = {d.split("/")[0] for d in OPTION_E_DIRS}
+    for subdir in OPTION_E_DIRS:
+        if (project_dir / subdir).is_dir():
+            folder_prefixes.append(wasabi_prefix + subdir)
+    for item in project_dir.iterdir():
+        if item.is_dir() and item.name not in top_dirs:
+            folder_prefixes.append(wasabi_prefix + item.name)
+    if folder_prefixes:
+        try:
+            return wasabi_service.create_folder_markers(folder_prefixes)
+        except Exception:
+            return []
+    return []
+
 @router.get("/sync/{project_name}/compare")
 async def compare_sync(project_name: str):
     """
@@ -671,6 +746,8 @@ async def sync_upload(project_name: str, files: list[str] | None = None, overwri
     if not wasabi_prefix.endswith("/"):
         wasabi_prefix += "/"
 
+    _sync_folder_structure(project_dir, wasabi_prefix)
+
     if files is None:
         comparison = await compare_sync(project_name)
         target_files = [f["relative_path"] for f in comparison["local_only"]]
@@ -717,7 +794,7 @@ _STREAM_HEADERS = {
 async def sync_upload_stream(project_name: str, files: list[str] | None = None, overwrite: bool = False):
     """Upload local files to Wasabi with streaming progress via newline-delimited JSON.
 
-    Emits events: start, file_start, bytes (per-chunk for large files), progress, complete.
+    Emits events: start, folder_sync, file_start, bytes (per-chunk for large files), progress, complete.
     """
     project_dir = PROJECTS_ROOT / project_name
     if not project_dir.exists():
@@ -727,6 +804,8 @@ async def sync_upload_stream(project_name: str, files: list[str] | None = None, 
     wasabi_prefix = report.get("wasabi_prefix", f"datasets/projects/{project_name}/")
     if not wasabi_prefix.endswith("/"):
         wasabi_prefix += "/"
+
+    _sync_folder_structure(project_dir, wasabi_prefix)
 
     if files is None:
         comparison = await compare_sync(project_name)

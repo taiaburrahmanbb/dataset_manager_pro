@@ -66,18 +66,18 @@ export async function getUploadCategories(): Promise<UploadCategory[]> {
 export async function uploadToWasabi(
   file: File,
   project: string,
-  category: string,
-  subfolder: string,
+  destPath: string,
   onProgress?: (pct: number) => void,
+  signal?: AbortSignal,
 ) {
   const form = new FormData();
   form.append('file', file);
   form.append('project', project);
-  form.append('category', category);
-  form.append('subfolder', subfolder);
+  form.append('dest_path', destPath);
 
   const { data } = await api.post('/storage/upload', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    signal,
     onUploadProgress: (e) => {
       if (onProgress && e.total) {
         onProgress(Math.round((e.loaded / e.total) * 100));
@@ -131,6 +131,11 @@ export async function createLocalProject(req: CreateProjectRequest) {
 
 export async function deleteLocalProject(name: string) {
   const { data } = await api.delete(`/storage/local/projects/${name}`);
+  return data;
+}
+
+export async function syncProjectFolders(name: string) {
+  const { data } = await api.post(`/storage/sync/${name}/folders`);
   return data;
 }
 

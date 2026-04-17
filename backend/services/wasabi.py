@@ -171,5 +171,18 @@ class WasabiService:
         except ClientError:
             return False
 
+    def create_folder_markers(self, prefixes: list[str]) -> list[str]:
+        """Create zero-byte folder marker objects (keys ending with '/') on Wasabi.
+        Skips any that already exist. Returns list of created keys."""
+        created = []
+        for prefix in prefixes:
+            key = prefix if prefix.endswith("/") else prefix + "/"
+            try:
+                self.client.head_object(Bucket=self.bucket, Key=key)
+            except ClientError:
+                self.client.put_object(Bucket=self.bucket, Key=key, Body=b"")
+                created.append(key)
+        return created
+
 
 wasabi_service = WasabiService()

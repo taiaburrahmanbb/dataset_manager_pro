@@ -11,7 +11,7 @@ import { Button } from '../components/common/Button';
 import { Progress } from '../components/common/Progress';
 import { Modal } from '../components/common/Modal';
 import { formatBytes } from '../lib/utils';
-import { getLocalProjects, createLocalProject, deleteLocalProject } from '../lib/api';
+import { getLocalProjects, createLocalProject, deleteLocalProject, syncProjectFolders } from '../lib/api';
 import type { LocalProject } from '../lib/api';
 
 const MODALITY_OPTIONS = ['vision', 'video', 'nlp', 'mixed'];
@@ -113,6 +113,7 @@ export default function Projects() {
   const handleCreate = async (data: { name: string; title: string; description: string; modality: string; tags: string[]; version: string }) => {
     try {
       await createLocalProject(data);
+      syncProjectFolders(data.name).catch(() => {});
       setShowCreate(false);
       await refresh();
     } catch {
