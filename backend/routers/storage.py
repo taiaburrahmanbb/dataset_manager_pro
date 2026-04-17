@@ -614,6 +614,43 @@ async def create_project_subdirectory(project_name: str, path: str):
 
 
 # ---------------------------------------------------------------------------
+#  Local Upload (save files to local project folders)
+# ---------------------------------------------------------------------------
+
+@router.post("/local/upload")
+async def upload_to_local(
+    file: UploadFile = File(...),
+    project: str = Form(...),
+    dest_path: str = Form(""),
+):
+    """Upload a file directly to a local project folder."""
+    project_dir = PROJECTS_ROOT / project
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not dest_path:
+        raise HTTPException(status_code=400, detail="dest_path is required")
+
+    dp = dest_path.strip("/")
+    target_dir = project_dir / dp
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = file.filename or "unknown"
+    target_file = target_dir / filename
+    file_data = await file.read()
+    target_file.write_bytes(file_data)
+
+    rel_path = str(target_file.relative_to(project_dir)).replace("\\", "/")
+    return {
+        "success": True,
+        "file": filename,
+        "path": rel_path,
+        "size": len(file_data),
+        "project": project,
+    }
+
+
+# ---------------------------------------------------------------------------
 #  File Sync (Local <-> Wasabi)
 # ---------------------------------------------------------------------------
 

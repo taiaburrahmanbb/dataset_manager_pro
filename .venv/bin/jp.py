@@ -1,4 +1,4 @@
-#!/home/taiabur/dataset_manager_pro/.venv/bin/python3.12
+#!/home/taiaburrahman/dataset_manager_pro/.venv/bin/python3
 
 import sys
 import json

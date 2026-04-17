@@ -12,6 +12,7 @@ import Activity from './pages/Activity';
 import Settings from './pages/Settings';
 import WasabiStatus from './pages/WasabiStatus';
 import CategoryUpload from './pages/CategoryUpload';
+import LocalUpload from './pages/LocalUpload';
 import WasabiBrowser from './pages/WasabiBrowser';
 import ProjectSummary from './pages/ProjectSummary';
 import FileSync from './pages/FileSync';
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/files" element={<FileBrowser />} />
             <Route path="/wasabi-status" element={<WasabiStatus />} />
             <Route path="/upload" element={<CategoryUpload />} />
+            <Route path="/local-upload" element={<LocalUpload />} />
             <Route path="/wasabi-browser" element={<WasabiBrowser />} />
             <Route path="/project-summary" element={<ProjectSummary />} />
             <Route path="/file-sync" element={<FileSync />} />

@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FolderOpen, Files, Cpu, GitBranch,
   Download, Settings, ChevronLeft, Database, Wifi, WifiOff,
-  Activity, Cloud, UploadCloud, Search, BookOpen, ArrowRightLeft,
+  Activity, Cloud, UploadCloud, Search, BookOpen, ArrowRightLeft, HardDrive,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAppStore } from '../../store/appStore';
@@ -10,7 +10,8 @@ import { useAppStore } from '../../store/appStore';
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/projects', icon: FolderOpen, label: 'Projects' },
-  { to: '/upload', icon: UploadCloud, label: 'Upload Assets' },
+  { to: '/upload', icon: UploadCloud, label: 'Upload to Wasabi' },
+  { to: '/local-upload', icon: HardDrive, label: 'Upload to Local' },
   { to: '/wasabi-status', icon: Cloud, label: 'Wasabi Status' },
   { to: '/wasabi-browser', icon: Search, label: 'Wasabi Browser' },
   { to: '/file-sync', icon: ArrowRightLeft, label: 'File Sync' },

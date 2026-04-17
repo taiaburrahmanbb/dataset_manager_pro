@@ -183,6 +183,34 @@ export async function createProjectSubdir(projectName: string, path: string) {
 }
 
 // ---------------------------------------------------------------------------
+//  Local Upload
+// ---------------------------------------------------------------------------
+
+export async function uploadToLocal(
+  file: File,
+  project: string,
+  destPath: string,
+  onProgress?: (pct: number) => void,
+  signal?: AbortSignal,
+) {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('project', project);
+  form.append('dest_path', destPath);
+
+  const { data } = await api.post('/storage/local/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    signal,
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    },
+  });
+  return data;
+}
+
+// ---------------------------------------------------------------------------
 //  File Sync
 // ---------------------------------------------------------------------------
 

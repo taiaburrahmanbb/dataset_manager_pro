@@ -1,10 +1,42 @@
-INFO:     Will watch for changes in these directories: ['/home/taiabur/dataset_manager_pro/backend']
+INFO:     Will watch for changes in these directories: ['/home/taiaburrahman/dataset_manager_pro/backend']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [2949419] using WatchFiles
-INFO:     Started server process [2949423]
+INFO:     Started reloader process [1492117] using WatchFiles
+INFO:     Started server process [1492121]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:60660 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60666 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53112 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53122 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58360 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58366 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58372 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58380 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60002 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60006 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60010 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47132 - "GET /api/v1/storage/local/project/GAID/tree?path=04.models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43082 - "POST /api/v1/storage/local/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43086 - "GET /api/v1/storage/local/project/GAID/tree?path=04.models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46978 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46986 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46996 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47000 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47006 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47018 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47026 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47028 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47044 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47046 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47056 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47072 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34304 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34318 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34322 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/storage.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1492121]
+INFO:     Started server process [1494261]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:39968 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39982 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39996 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
