@@ -1,42 +1,137 @@
 INFO:     Will watch for changes in these directories: ['/home/taiaburrahman/dataset_manager_pro/backend']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [1492117] using WatchFiles
-INFO:     Started server process [1492121]
+INFO:     Started reloader process [1781299] using WatchFiles
+INFO:     Started server process [1781303]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:58360 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58366 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58372 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58380 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60002 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60006 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60010 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47132 - "GET /api/v1/storage/local/project/GAID/tree?path=04.models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43082 - "POST /api/v1/storage/local/upload HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43086 - "GET /api/v1/storage/local/project/GAID/tree?path=04.models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:46978 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:46986 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:46996 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47000 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47006 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47018 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47026 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47028 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47044 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47046 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47056 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47072 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34304 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34318 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34322 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
-WARNING:  WatchFiles detected changes in 'routers/storage.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [1492121]
-INFO:     Started server process [1494261]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     127.0.0.1:39968 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39982 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39996 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39098 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39112 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39120 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39132 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39144 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39148 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39156 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60768 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60776 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60782 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39242 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39254 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39260 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48918 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48924 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48930 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48588 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48602 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48612 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37014 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37040 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37044 - "POST /api/v1/storage/sync/GAID/upload-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36310 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47540 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47554 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47560 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58868 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58884 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58898 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58992 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58998 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49316 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49320 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49334 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F01.raw%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56076 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56092 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56100 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FCAR-DMD%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56108 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47558 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47570 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47572 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47584 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47588 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47604 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47606 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47612 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47616 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47628 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34148 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34160 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38276 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38282 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38284 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38298 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52338 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52352 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52356 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52366 - "POST /api/v1/storage/sync/GAID/download-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47184 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39744 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39746 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39758 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39768 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38914 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38922 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38938 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38946 - "GET /api/v1/storage/local/project/GAID/stages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38956 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38966 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56818 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56828 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56838 - "GET /api/v1/storage/docs/GAID/readme HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56848 - "GET /api/v1/storage/docs/GAID/changelog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /api/v1/storage/local/project/GAID/tree?path= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56878 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56880 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56892 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56880 - "POST /api/v1/storage/sync/GAID/download-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56890 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41328 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41338 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41348 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44894 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44900 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44908 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44922 - "GET /api/v1/storage/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55022 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55032 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55042 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34982 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34992 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34998 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33550 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33554 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33558 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37904 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52438 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52452 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52456 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52466 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50682 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50686 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F06.monitoring%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50692 - "GET /api/v1/storage/browse?prefix=datasets%2Fprojects%2FGAID%2F06.monitoring%2Fdata%2F&search= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58592 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58594 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58598 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59160 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59166 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59170 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32934 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32938 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32940 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50200 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50210 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50212 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50242 - "POST /api/v1/storage/sync/GAID/upload-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34434 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52976 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52984 - "GET /api/v1/storage/local/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52992 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55274 - "POST /api/v1/storage/sync/GAID/upload-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33948 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35286 - "POST /api/v1/storage/sync/GAID/upload-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36398 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51388 - "POST /api/v1/storage/sync/GAID/upload-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52012 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45358 - "POST /api/v1/storage/sync/GAID/upload-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56444 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45046 - "POST /api/v1/storage/sync/GAID/upload-stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41044 - "GET /api/v1/storage/sync/GAID/compare HTTP/1.1" 200 OK
