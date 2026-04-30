@@ -244,6 +244,13 @@ export async function compareSyncFiles(projectName: string): Promise<SyncCompari
   return data;
 }
 
+export async function deleteWasabiFile(projectName: string, relativePath: string): Promise<{ deleted: boolean; key: string }> {
+  const { data } = await api.delete(`/storage/sync/${projectName}/wasabi-file`, {
+    params: { relative_path: relativePath },
+  });
+  return data;
+}
+
 export async function syncUpload(projectName: string, files?: string[], overwrite = false) {
   const { data } = await api.post(`/storage/sync/${projectName}/upload`, files, {
     params: { overwrite },

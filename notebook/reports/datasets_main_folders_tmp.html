@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>datasets_main_folders.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Folder</th>
+<th style="text-align:right">Total Files</th>
+<th style="text-align:right">Size (GB)</th>
+<th style="text-align:left">Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_ethinicity_deepfake_website/</td>
+<td style="text-align:right">9074</td>
+<td style="text-align:right">0.832</td>
+<td style="text-align:left">jpg (9072), webp (2)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_facebook_march25_cleaned/</td>
+<td style="text-align:right">137476</td>
+<td style="text-align:right">6.89</td>
+<td style="text-align:left">jpg (137465), webp (11)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_insta_collection_oct25/</td>
+<td style="text-align:right">23876</td>
+<td style="text-align:right">4.552</td>
+<td style="text-align:left">jpg (22448), webp (1400), png (28)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_official_website_oct25/</td>
+<td style="text-align:right">36896</td>
+<td style="text-align:right">5.383</td>
+<td style="text-align:left">jpg (33957), png (2598), jpeg (301), webp (40)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_reddit_dec25/</td>
+<td style="text-align:right">2833</td>
+<td style="text-align:right">5.19</td>
+<td style="text-align:left">png (1383), jpeg (1243), jpg (207)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_reddit_feb25/</td>
+<td style="text-align:right">35945</td>
+<td style="text-align:right">14.505</td>
+<td style="text-align:left">jpg (27204), png (6392), jpeg (2314), webp (35)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_website_collection_nov25/</td>
+<td style="text-align:right">65043</td>
+<td style="text-align:right">7.079</td>
+<td style="text-align:left">jpg (63213), png (1777), jpeg (45), webp (7), (no_ext) (1)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_website_jan-feb26/</td>
+<td style="text-align:right">25625</td>
+<td style="text-align:right">6.671</td>
+<td style="text-align:left">jpg (12700), jpeg (9434), png (2180), webp (1306), ai (2), market (2), me (1)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_website_june25/</td>
+<td style="text-align:right">13456</td>
+<td style="text-align:right">1.462</td>
+<td style="text-align:left">jpg (10711), png (1915), (no_ext) (688), jpeg (102), webp (37), svg (2), php (1)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_x_collection_dec25/</td>
+<td style="text-align:right">19657</td>
+<td style="text-align:right">2.842</td>
+<td style="text-align:left">jpg (19446), png (184), jpeg (27)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_x_collection_feb25_cleaned/</td>
+<td style="text-align:right">71744</td>
+<td style="text-align:right">11.371</td>
+<td style="text-align:left">jpg (70143), png (1568), jpeg (25), (no_ext) (7), ds_store (1)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/fake/ai_image_x_july25/</td>
+<td style="text-align:right">2088</td>
+<td style="text-align:right">0.766</td>
+<td style="text-align:left">jpeg (1355), jfif (482), jpg (197), png (54)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/real/chinese_korean_real_images/</td>
+<td style="text-align:right">10297</td>
+<td style="text-align:right">0.441</td>
+<td style="text-align:left">jpg (10295), (no_ext) (1), mp4 (1)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/real/real_faces_feb_collection/</td>
+<td style="text-align:right">20734</td>
+<td style="text-align:right">3.948</td>
+<td style="text-align:left">jpg (20676), png (57), webp (1)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/real/real_faces_march_collection/</td>
+<td style="text-align:right">24363</td>
+<td style="text-align:right">0.796</td>
+<td style="text-align:left">jpg (24362), sh (1)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/real/real_image_website_collection_dec25/</td>
+<td style="text-align:right">46230</td>
+<td style="text-align:right">63.711</td>
+<td style="text-align:left">jpeg (29204), jpg (16835), png (191)</td>
+</tr>
+<tr>
+<td style="text-align:left">v11-processing/real/real_image_website_collection_nov25/</td>
+<td style="text-align:right">29192</td>
+<td style="text-align:right">10.688</td>
+<td style="text-align:left">jpg (15448), jpeg (13468), jfif (135), png (133), webp (8)</td>
+</tr>
+<tr>
+<td style="text-align:left">TOTAL</td>
+<td style="text-align:right">574529</td>
+<td style="text-align:right">147.127</td>
+<td style="text-align:left"></td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

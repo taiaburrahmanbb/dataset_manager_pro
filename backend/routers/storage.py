@@ -771,6 +771,25 @@ async def compare_sync(project_name: str):
     }
 
 
+@router.delete("/sync/{project_name}/wasabi-file")
+async def delete_wasabi_file(project_name: str, relative_path: str):
+    """Delete a specific file from Wasabi by its relative path within the project prefix."""
+    project_dir = PROJECTS_ROOT / project_name
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Project not found locally")
+
+    report = _read_project_report(project_dir)
+    wasabi_prefix = report.get("wasabi_prefix", f"datasets/projects/{project_name}/")
+    if not wasabi_prefix.endswith("/"):
+        wasabi_prefix += "/"
+
+    key = wasabi_prefix + relative_path.lstrip("/")
+    success = wasabi_service.delete_object(key)
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Failed to delete '{key}' from Wasabi")
+    return {"deleted": True, "key": key}
+
+
 @router.post("/sync/{project_name}/upload")
 async def sync_upload(project_name: str, files: list[str] | None = None, overwrite: bool = False):
     """Upload local files to Wasabi. If files is None, uploads all local-only files."""

@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowRightLeft, RefreshCw, ArrowRight, ArrowLeft,
   CheckCircle, XCircle, AlertTriangle, FolderOpen,
   Cloud, FileText, Search, Clock, Zap, StopCircle,
+  ChevronRight, ChevronDown, Folder,
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { Card, CardBody } from '../components/common/Card';
@@ -50,6 +51,95 @@ function formatElapsed(ms: number): string {
   return `${m}m ${s % 60}s`;
 }
 
+const ROOT_CATEGORY = '(root)';
+
+interface SubGroup {
+  name: string;
+  fullPath: string;
+  files: SyncFile[];
+  localSize: number;
+  wasabiSize: number;
+}
+
+interface CategoryGroup {
+  category: string;
+  totalCount: number;
+  localSize: number;
+  wasabiSize: number;
+  subfolders: SubGroup[];
+  rootFiles: SyncFile[];
+}
+
+function groupFilesByCategory(files: SyncFile[]): CategoryGroup[] {
+  const map = new Map<string, {
+    rootFiles: SyncFile[];
+    subMap: Map<string, SubGroup>;
+    localSize: number;
+    wasabiSize: number;
+  }>();
+
+  for (const file of files) {
+    const parts = file.relative_path.split('/');
+    const category = parts.length > 1 ? parts[0] : ROOT_CATEGORY;
+
+    let bucket = map.get(category);
+    if (!bucket) {
+      bucket = { rootFiles: [], subMap: new Map(), localSize: 0, wasabiSize: 0 };
+      map.set(category, bucket);
+    }
+    bucket.localSize += file.local_size ?? 0;
+    bucket.wasabiSize += file.wasabi_size ?? 0;
+
+    if (parts.length <= 2) {
+      bucket.rootFiles.push(file);
+    } else {
+      const subName = parts[1];
+      const fullPath = `${category}/${subName}`;
+      let sub = bucket.subMap.get(subName);
+      if (!sub) {
+        sub = { name: subName, fullPath, files: [], localSize: 0, wasabiSize: 0 };
+        bucket.subMap.set(subName, sub);
+      }
+      sub.files.push(file);
+      sub.localSize += file.local_size ?? 0;
+      sub.wasabiSize += file.wasabi_size ?? 0;
+    }
+  }
+
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([category, bucket]) => {
+      const subfolders = Array.from(bucket.subMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
+      const rootFiles = bucket.rootFiles
+        .slice()
+        .sort((a, b) => a.relative_path.localeCompare(b.relative_path));
+      const totalCount =
+        rootFiles.length + subfolders.reduce((acc, s) => acc + s.files.length, 0);
+      return {
+        category,
+        totalCount,
+        localSize: bucket.localSize,
+        wasabiSize: bucket.wasabiSize,
+        subfolders,
+        rootFiles,
+      };
+    });
+}
+
+function categoryColor(category: string): string {
+  if (category.startsWith('01.')) return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+  if (category.startsWith('02.')) return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
+  if (category.startsWith('03.')) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+  if (category.startsWith('04.')) return 'text-violet-400 bg-violet-500/10 border-violet-500/30';
+  if (category.startsWith('05.')) return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30';
+  if (category.startsWith('06.')) return 'text-rose-400 bg-rose-500/10 border-rose-500/30';
+  if (category.startsWith('07.')) return 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/30';
+  if (category.startsWith('08.')) return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30';
+  return 'text-gray-400 bg-gray-500/10 border-gray-500/30';
+}
+
 export default function FileSync() {
   const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState<LocalProject[]>([]);
@@ -63,6 +153,8 @@ export default function FileSync() {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [progress, setProgress] = useState<SyncProgress | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedSubfolders, setExpandedSubfolders] = useState<Set<string>>(new Set());
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -232,6 +324,36 @@ export default function FileSync() {
     ? currentFiles.filter(f => f.relative_path.toLowerCase().includes(search.toLowerCase()))
     : currentFiles;
 
+  const groups = useMemo(() => groupFilesByCategory(filteredFiles), [filteredFiles]);
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  };
+
+  const toggleSubfolder = (path: string) => {
+    setExpandedSubfolders(prev => {
+      const next = new Set(prev);
+      next.has(path) ? next.delete(path) : next.add(path);
+      return next;
+    });
+  };
+
+  const expandAllGroups = () => {
+    setExpandedCategories(new Set(groups.map(g => g.category)));
+    setExpandedSubfolders(
+      new Set(groups.flatMap(g => g.subfolders.map(s => s.fullPath))),
+    );
+  };
+
+  const collapseAllGroups = () => {
+    setExpandedCategories(new Set());
+    setExpandedSubfolders(new Set());
+  };
+
   const summary = comparison?.summary;
 
   return (
@@ -391,6 +513,14 @@ export default function FileSync() {
                   className="w-full pl-9 pr-4 py-2 bg-gray-900 border border-white/8 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-violet-500/50 transition-all"
                 />
               </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" icon={<ChevronDown size={13} />} onClick={expandAllGroups}>
+                  Expand all
+                </Button>
+                <Button variant="ghost" size="sm" icon={<ChevronRight size={13} />} onClick={collapseAllGroups}>
+                  Collapse all
+                </Button>
+              </div>
               {selectedFiles.size > 0 && (
                 <div className="flex gap-2">
                   {tab === 'local_only' && (
@@ -429,7 +559,7 @@ export default function FileSync() {
               )}
             </div>
 
-            {/* File List — Dual Pane */}
+            {/* File List — Grouped by Category */}
             <Card>
               <div className="divide-y divide-white/5">
                 {/* Header */}
@@ -451,7 +581,7 @@ export default function FileSync() {
                   <div className="w-20 text-center">Action</div>
                 </div>
 
-                {filteredFiles.length === 0 && (
+                {groups.length === 0 && (
                   <div className="py-12 text-center text-gray-600">
                     <ArrowRightLeft size={28} className="mx-auto mb-2 text-gray-700" />
                     <p className="text-sm">
@@ -462,108 +592,22 @@ export default function FileSync() {
                   </div>
                 )}
 
-                {filteredFiles.map(file => (
-                  <div
-                    key={file.relative_path}
-                    className={cn(
-                      'grid grid-cols-[auto_1fr_1fr_auto] gap-2 px-4 py-2.5 items-center hover:bg-white/3 transition-colors',
-                      selectedFiles.has(file.relative_path) && 'bg-violet-500/5'
-                    )}
-                  >
-                    <div className="w-5">
-                      <input
-                        type="checkbox"
-                        className="accent-violet-500"
-                        checked={selectedFiles.has(file.relative_path)}
-                        onChange={() => toggleFile(file.relative_path)}
-                      />
-                    </div>
-
-                    {/* Local column */}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <FileText size={12} className={file.local_size != null ? 'text-blue-400' : 'text-gray-700'} />
-                        <span className="text-xs text-gray-300 truncate">{file.relative_path}</span>
-                      </div>
-                      {file.local_size != null ? (
-                        <span className="text-[10px] text-gray-500 ml-5">{formatBytes(file.local_size)}</span>
-                      ) : (
-                        <span className="text-[10px] text-gray-700 ml-5">— not on disk</span>
-                      )}
-                    </div>
-
-                    {/* Wasabi column */}
-                    <div className="min-w-0">
-                      {file.wasabi_size != null ? (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <Cloud size={12} className="text-violet-400" />
-                            <span className="text-xs text-gray-300 truncate">{file.wasabi_key || file.relative_path}</span>
-                          </div>
-                          <div className="flex items-center gap-2 ml-5">
-                            <span className="text-[10px] text-gray-500">{formatBytes(file.wasabi_size)}</span>
-                            {file.size_match === false && (
-                              <Badge className="text-amber-400 bg-amber-500/10 border-amber-500/30">
-                                <AlertTriangle size={8} /> size mismatch
-                              </Badge>
-                            )}
-                            {file.size_match === true && (
-                              <CheckCircle size={10} className="text-emerald-500" />
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Cloud size={12} className="text-gray-700" />
-                          <span className="text-[10px] text-gray-700">— not in Wasabi</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action column */}
-                    <div className="w-20 flex justify-center">
-                      {tab === 'local_only' && (
-                        <button
-                          onClick={() => handleSyncUpload([file.relative_path])}
-                          disabled={syncing}
-                          className="p-1.5 rounded-md text-blue-400 hover:bg-blue-500/10 transition-colors"
-                          title="Upload to Wasabi"
-                        >
-                          <ArrowRight size={14} />
-                        </button>
-                      )}
-                      {tab === 'wasabi_only' && (
-                        <button
-                          onClick={() => handleSyncDownload([file.relative_path])}
-                          disabled={syncing}
-                          className="p-1.5 rounded-md text-violet-400 hover:bg-violet-500/10 transition-colors"
-                          title="Download to local"
-                        >
-                          <ArrowLeft size={14} />
-                        </button>
-                      )}
-                      {tab === 'synced' && (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleSyncUpload([file.relative_path])}
-                            disabled={syncing}
-                            className="p-1 rounded text-blue-400 hover:bg-blue-500/10 transition-colors"
-                            title="Re-upload to Wasabi"
-                          >
-                            <ArrowRight size={12} />
-                          </button>
-                          <button
-                            onClick={() => handleSyncDownload([file.relative_path])}
-                            disabled={syncing}
-                            className="p-1 rounded text-violet-400 hover:bg-violet-500/10 transition-colors"
-                            title="Re-download from Wasabi"
-                          >
-                            <ArrowLeft size={12} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                {groups.map(group => (
+                  <CategorySection
+                    key={group.category}
+                    group={group}
+                    tab={tab}
+                    syncing={syncing}
+                    selectedFiles={selectedFiles}
+                    expandedCategories={expandedCategories}
+                    expandedSubfolders={expandedSubfolders}
+                    onToggleCategory={toggleCategory}
+                    onToggleSubfolder={toggleSubfolder}
+                    onToggleFile={toggleFile}
+                    onSelectAll={selectAll}
+                    onUpload={handleSyncUpload}
+                    onDownload={handleSyncDownload}
+                  />
                 ))}
               </div>
             </Card>
@@ -769,5 +813,407 @@ function SyncFileLog({ log }: { log: { file: string; status: 'success' | 'error'
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+//  Grouped file list — Category > Subfolder > File
+// ---------------------------------------------------------------------------
+
+interface CategorySectionProps {
+  group: CategoryGroup;
+  tab: SyncTab;
+  syncing: boolean;
+  selectedFiles: Set<string>;
+  expandedCategories: Set<string>;
+  expandedSubfolders: Set<string>;
+  onToggleCategory: (category: string) => void;
+  onToggleSubfolder: (path: string) => void;
+  onToggleFile: (path: string) => void;
+  onSelectAll: (files: SyncFile[]) => void;
+  onUpload: (files: string[]) => void;
+  onDownload: (files: string[]) => void;
+}
+
+function collectFiles(group: CategoryGroup): SyncFile[] {
+  return [...group.rootFiles, ...group.subfolders.flatMap(s => s.files)];
+}
+
+function CategorySection({
+  group, tab, syncing, selectedFiles,
+  expandedCategories, expandedSubfolders,
+  onToggleCategory, onToggleSubfolder, onToggleFile,
+  onSelectAll, onUpload, onDownload,
+}: CategorySectionProps) {
+  const expanded = expandedCategories.has(group.category);
+  const allFiles = collectFiles(group);
+  const allPaths = allFiles.map(f => f.relative_path);
+  const allSelected = allPaths.length > 0 && allPaths.every(p => selectedFiles.has(p));
+  const someSelected = !allSelected && allPaths.some(p => selectedFiles.has(p));
+  const tone = categoryColor(group.category);
+
+  return (
+    <div>
+      {/* Category header */}
+      <div
+        className={cn(
+          'grid grid-cols-[auto_1fr_1fr_auto] gap-2 px-4 py-2.5 items-center bg-gray-900/40 hover:bg-gray-900/60 transition-colors',
+        )}
+      >
+        <div className="w-5">
+          <input
+            type="checkbox"
+            className="accent-violet-500"
+            checked={allSelected}
+            ref={el => { if (el) el.indeterminate = someSelected; }}
+            onChange={() => onSelectAll(allFiles)}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onToggleCategory(group.category)}
+          className="col-span-2 flex items-center gap-2 min-w-0 text-left"
+        >
+          {expanded
+            ? <ChevronDown size={14} className="text-gray-500 flex-shrink-0" />
+            : <ChevronRight size={14} className="text-gray-500 flex-shrink-0" />}
+          <span className={cn(
+            'inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-semibold',
+            tone,
+          )}>
+            <Folder size={11} />
+            {group.category}
+          </span>
+          <span className="text-[11px] text-gray-500 truncate">
+            {group.totalCount} file{group.totalCount === 1 ? '' : 's'}
+            {group.subfolders.length > 0 && ` · ${group.subfolders.length} folder${group.subfolders.length === 1 ? '' : 's'}`}
+            {tab !== 'wasabi_only' && group.localSize > 0 && ` · ${formatBytes(group.localSize)} local`}
+            {tab === 'wasabi_only' && group.wasabiSize > 0 && ` · ${formatBytes(group.wasabiSize)} wasabi`}
+          </span>
+        </button>
+
+        <div className="w-20 flex justify-center">
+          {tab === 'local_only' && (
+            <button
+              onClick={() => onUpload(allPaths)}
+              disabled={syncing || allPaths.length === 0}
+              className="p-1.5 rounded-md text-blue-400 hover:bg-blue-500/10 transition-colors disabled:opacity-40"
+              title={`Upload all in ${group.category}`}
+            >
+              <ArrowRight size={14} />
+            </button>
+          )}
+          {tab === 'wasabi_only' && (
+            <button
+              onClick={() => onDownload(allPaths)}
+              disabled={syncing || allPaths.length === 0}
+              className="p-1.5 rounded-md text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-40"
+              title={`Download all in ${group.category}`}
+            >
+              <ArrowLeft size={14} />
+            </button>
+          )}
+          {tab === 'synced' && (
+            <div className="flex gap-1">
+              <button
+                onClick={() => onUpload(allPaths)}
+                disabled={syncing || allPaths.length === 0}
+                className="p-1 rounded text-blue-400 hover:bg-blue-500/10 transition-colors disabled:opacity-40"
+                title={`Re-upload all in ${group.category}`}
+              >
+                <ArrowRight size={12} />
+              </button>
+              <button
+                onClick={() => onDownload(allPaths)}
+                disabled={syncing || allPaths.length === 0}
+                className="p-1 rounded text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-40"
+                title={`Re-download all in ${group.category}`}
+              >
+                <ArrowLeft size={12} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Category body */}
+      {expanded && (
+        <div className="divide-y divide-white/5 border-t border-white/5">
+          {group.subfolders.map(sub => (
+            <SubfolderSection
+              key={sub.fullPath}
+              sub={sub}
+              tab={tab}
+              syncing={syncing}
+              selectedFiles={selectedFiles}
+              expanded={expandedSubfolders.has(sub.fullPath)}
+              onToggleSubfolder={onToggleSubfolder}
+              onToggleFile={onToggleFile}
+              onSelectAll={onSelectAll}
+              onUpload={onUpload}
+              onDownload={onDownload}
+            />
+          ))}
+          {group.rootFiles.map(file => (
+            <FileRow
+              key={file.relative_path}
+              file={file}
+              tab={tab}
+              syncing={syncing}
+              selected={selectedFiles.has(file.relative_path)}
+              onToggle={onToggleFile}
+              onUpload={onUpload}
+              onDownload={onDownload}
+              indent={1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface SubfolderSectionProps {
+  sub: SubGroup;
+  tab: SyncTab;
+  syncing: boolean;
+  selectedFiles: Set<string>;
+  expanded: boolean;
+  onToggleSubfolder: (path: string) => void;
+  onToggleFile: (path: string) => void;
+  onSelectAll: (files: SyncFile[]) => void;
+  onUpload: (files: string[]) => void;
+  onDownload: (files: string[]) => void;
+}
+
+function SubfolderSection({
+  sub, tab, syncing, selectedFiles, expanded,
+  onToggleSubfolder, onToggleFile, onSelectAll, onUpload, onDownload,
+}: SubfolderSectionProps) {
+  const allPaths = sub.files.map(f => f.relative_path);
+  const allSelected = allPaths.length > 0 && allPaths.every(p => selectedFiles.has(p));
+  const someSelected = !allSelected && allPaths.some(p => selectedFiles.has(p));
+
+  return (
+    <div>
+      {/* Subfolder header */}
+      <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 px-4 py-2 items-center hover:bg-white/3 transition-colors pl-8">
+        <div className="w-5">
+          <input
+            type="checkbox"
+            className="accent-violet-500"
+            checked={allSelected}
+            ref={el => { if (el) el.indeterminate = someSelected; }}
+            onChange={() => onSelectAll(sub.files)}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onToggleSubfolder(sub.fullPath)}
+          className="col-span-2 flex items-center gap-2 min-w-0 text-left"
+        >
+          {expanded
+            ? <ChevronDown size={12} className="text-gray-500 flex-shrink-0" />
+            : <ChevronRight size={12} className="text-gray-500 flex-shrink-0" />}
+          <Folder size={12} className="text-gray-400 flex-shrink-0" />
+          <span className="text-xs text-gray-300 font-medium truncate">{sub.name}/</span>
+          <span className="text-[10px] text-gray-600 truncate">
+            {sub.files.length} file{sub.files.length === 1 ? '' : 's'}
+            {tab !== 'wasabi_only' && sub.localSize > 0 && ` · ${formatBytes(sub.localSize)}`}
+            {tab === 'wasabi_only' && sub.wasabiSize > 0 && ` · ${formatBytes(sub.wasabiSize)}`}
+          </span>
+        </button>
+
+        <div className="w-20 flex justify-center">
+          {tab === 'local_only' && (
+            <button
+              onClick={() => onUpload(allPaths)}
+              disabled={syncing}
+              className="p-1 rounded text-blue-400 hover:bg-blue-500/10 transition-colors"
+              title={`Upload ${sub.fullPath}`}
+            >
+              <ArrowRight size={12} />
+            </button>
+          )}
+          {tab === 'wasabi_only' && (
+            <button
+              onClick={() => onDownload(allPaths)}
+              disabled={syncing}
+              className="p-1 rounded text-violet-400 hover:bg-violet-500/10 transition-colors"
+              title={`Download ${sub.fullPath}`}
+            >
+              <ArrowLeft size={12} />
+            </button>
+          )}
+          {tab === 'synced' && (
+            <div className="flex gap-1">
+              <button
+                onClick={() => onUpload(allPaths)}
+                disabled={syncing}
+                className="p-1 rounded text-blue-400 hover:bg-blue-500/10 transition-colors"
+                title={`Re-upload ${sub.fullPath}`}
+              >
+                <ArrowRight size={11} />
+              </button>
+              <button
+                onClick={() => onDownload(allPaths)}
+                disabled={syncing}
+                className="p-1 rounded text-violet-400 hover:bg-violet-500/10 transition-colors"
+                title={`Re-download ${sub.fullPath}`}
+              >
+                <ArrowLeft size={11} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Subfolder body */}
+      {expanded && (
+        <div className="divide-y divide-white/5">
+          {sub.files.map(file => (
+            <FileRow
+              key={file.relative_path}
+              file={file}
+              tab={tab}
+              syncing={syncing}
+              selected={selectedFiles.has(file.relative_path)}
+              onToggle={onToggleFile}
+              onUpload={onUpload}
+              onDownload={onDownload}
+              indent={2}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface FileRowProps {
+  file: SyncFile;
+  tab: SyncTab;
+  syncing: boolean;
+  selected: boolean;
+  onToggle: (path: string) => void;
+  onUpload: (files: string[]) => void;
+  onDownload: (files: string[]) => void;
+  indent: 1 | 2;
+}
+
+function FileRow({
+  file, tab, syncing, selected, onToggle, onUpload, onDownload, indent,
+}: FileRowProps) {
+  const indentClass = indent === 2 ? 'pl-14' : 'pl-8';
+  const tail = file.relative_path.split('/').slice(indent).join('/') || file.relative_path;
+
+  return (
+    <div
+      className={cn(
+        'grid grid-cols-[auto_1fr_1fr_auto] gap-2 px-4 py-2 items-center hover:bg-white/3 transition-colors',
+        indentClass,
+        selected && 'bg-violet-500/5',
+      )}
+    >
+      <div className="w-5">
+        <input
+          type="checkbox"
+          className="accent-violet-500"
+          checked={selected}
+          onChange={() => onToggle(file.relative_path)}
+        />
+      </div>
+
+      {/* Local column */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <FileText size={12} className={file.local_size != null ? 'text-blue-400' : 'text-gray-700'} />
+          <span className="text-xs text-gray-300 truncate" title={file.relative_path}>{tail}</span>
+        </div>
+        {file.local_size != null ? (
+          <span className="text-[10px] text-gray-500 ml-5">{formatBytes(file.local_size)}</span>
+        ) : (
+          <span className="text-[10px] text-gray-700 ml-5">— not on disk</span>
+        )}
+      </div>
+
+      {/* Wasabi column */}
+      <div className="min-w-0">
+        {file.wasabi_size != null ? (
+          <>
+            <div className="flex items-center gap-2">
+              <Cloud size={12} className="text-violet-400" />
+              <span className="text-xs text-gray-300 truncate" title={file.wasabi_key || file.relative_path}>
+                {file.wasabi_key || file.relative_path}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 ml-5">
+              <span className="text-[10px] text-gray-500">{formatBytes(file.wasabi_size)}</span>
+              {file.size_match === false && (
+                <Badge className="text-amber-400 bg-amber-500/10 border-amber-500/30">
+                  <AlertTriangle size={8} /> size mismatch
+                </Badge>
+              )}
+              {file.size_match === true && (
+                <CheckCircle size={10} className="text-emerald-500" />
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Cloud size={12} className="text-gray-700" />
+            <span className="text-[10px] text-gray-700">— not in Wasabi</span>
+          </div>
+        )}
+      </div>
+
+      {/* Action column */}
+      <div className="w-20 flex justify-center">
+        {tab === 'local_only' && (
+          <button
+            onClick={() => onUpload([file.relative_path])}
+            disabled={syncing}
+            className="p-1.5 rounded-md text-blue-400 hover:bg-blue-500/10 transition-colors"
+            title="Upload to Wasabi"
+          >
+            <ArrowRight size={14} />
+          </button>
+        )}
+        {tab === 'wasabi_only' && (
+          <button
+            onClick={() => onDownload([file.relative_path])}
+            disabled={syncing}
+            className="p-1.5 rounded-md text-violet-400 hover:bg-violet-500/10 transition-colors"
+            title="Download to local"
+          >
+            <ArrowLeft size={14} />
+          </button>
+        )}
+        {tab === 'synced' && (
+          <div className="flex gap-1">
+            <button
+              onClick={() => onUpload([file.relative_path])}
+              disabled={syncing}
+              className="p-1 rounded text-blue-400 hover:bg-blue-500/10 transition-colors"
+              title="Re-upload to Wasabi"
+            >
+              <ArrowRight size={12} />
+            </button>
+            <button
+              onClick={() => onDownload([file.relative_path])}
+              disabled={syncing}
+              className="p-1 rounded text-violet-400 hover:bg-violet-500/10 transition-colors"
+              title="Re-download from Wasabi"
+            >
+              <ArrowLeft size={12} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
